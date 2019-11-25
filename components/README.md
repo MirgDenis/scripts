@@ -27,4 +27,7 @@ Label components:
 …
 
 ### Known issues
-This script does not work for busybox based images and images which consist only binaries.
+This script does not work for:
+- Busybox based images 
+- Images which consist only binaries
+It will duplicate deb (and other pkg managers) installed python packages in "Deb installed" and "Python installed" section.
