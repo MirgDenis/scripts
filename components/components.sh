@@ -7,30 +7,28 @@ else
   docker pull $1
   container_id=`docker run -d --entrypoint "/bin/sleep" $1 365d`
 
-  dpkg_check=`docker exec $container_id /bin/sh -c "command -v dpkg"`
-  rpm_check=`docker exec $container_id /bin/sh -c "command -v rpm"`
-  apk_check=`docker exec $container_id /bin/sh -c "command -v apk"`
+  my_check() {
+    docker exec $container_id /bin/sh -c "command -v $1" > /dev/null
+  }
 
   echo "$1 image consists:"
-  if [ -n "$dpkg_check" ]; then
+  if my_check dpkg; then
     # Apt check
-    dpkg=`docker exec $container_id /bin/sh -c "dpkg -l | grep '^ii' | awk '{print \\$2 \\" \\" \\$3}'"`
     echo -e "\nApt installed packages:"
-    echo $dpkg | sed -e 's| |\n|2' -e 'P;D'
-  elif [ -n "$rpm_check" ]; then 
+    docker exec $container_id /bin/sh -c "dpkg -l | grep '^ii' | awk '{print \$2 \" \" \$3}'"
+  elif my_check rpm; then
     # Yum check
-    rpm=`docker exec $container_id /bin/sh -c "rpm -qa"`
     echo -e "\nYum installed packages:"
-    echo $rpm | sed -e 's| |\n|1' -e 'P;D' | sed -e 's|.el7||g' -e 's|.x86_64||g' -e 's|.noarch||g' | sed -n 's|-\([0-9]\)| \1|p'
-  elif [ -n "$apk_check" ]; then
-    apk=`docker exec $container_id /bin/sh -c "apk info -v 2>/dev/null"`
+    docker exec $container_id /bin/sh -c "rpm -qa | sed -e 's|.el7||g' -e 's|.x86_64||g' -e 's|.noarch||g' | sed -n 's|-\([0-9]\)| \1|p'"
+  elif my_check apk; then
+    # Apk check
     echo -e "\nApk installed packages:"
-    echo $apk | sed -e 's| |\n|1' -e 'P;D' | sed -n 's|-\([0-9]\)| \1|p'
+    docker exec $container_id /bin/sh -c "apk info -v 2>/dev/null | sed -n 's|-\([0-9]\)| \1|p'"
   fi
 
   # Pip check
   pip=`docker exec $container_id /bin/sh -c "find / -name dist-packages -o -name site-packages 2>/dev/null | for i in \\$(cat); do ls \\$i | grep egg-info; done"`
-  echo -e "\nPip installed packages:"
+  echo -e "\nPython installed packages:"
   if [ -z "$pip" ]; then
     echo "There are no python packages"
   else
