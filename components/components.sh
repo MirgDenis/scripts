@@ -27,12 +27,12 @@ else
   fi
 
   # Pip check
-  pip=`docker exec $container_id /bin/sh -c "find / -name dist-packages -o -name site-packages 2>/dev/null | for i in \\$(cat); do ls \\$i | grep egg-info; done"`
+  pip=`docker exec $container_id /bin/sh -c "find / -name dist-packages -o -name site-packages 2>/dev/null | for i in \\$(cat); do ls \\$i | grep -e egg-info -e dist-info; done"`
   echo -e "\nPython installed packages:"
   if [ -z "$pip" ]; then
     echo "There are no python packages"
   else
-    echo $pip | sed 's|.egg-info||g' | sed -e 's| |\n|1' -e 'P;D' | sed -n 's|-\([0-9]\)| \1|p'
+    echo $pip | sed 's|.egg-info||g' | sed 's|.dist-info||g' | sed -e 's| |\n|1' -e 'P;D' | sed -n 's|-\([0-9]\)| \1|p'
   fi
 
   # Gem check 
